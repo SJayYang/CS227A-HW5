@@ -123,11 +123,18 @@ class AugmentedDataset(Dataset):
         The output format should be exactly the same as RGBDataset.__getitem__
         """
         data_torch = self.rgb_dataset[idx]
-        # TODO: complete this method 
-        # Hint: https://imgaug.readthedocs.io/en/latest/source/examples_keypoints.html 
-        # Hint: use get_finger_points and get_center_angle
-        # ===============================================================================
-        
+        center = data_torch["center_point"].numpy()
+        rgb = data_torch["rgb"].numpy()
+        left_finger, right_finger = get_finger_points(center_point=center, angle=data_torch["angle"])
+        kps = KeypointsOnImage([
+            Keypoint(x=left_finger[0], y=left_finger[1]),
+            Keypoint(x=right_finger[0], y=right_finger[1])
+        ], shape=rgb.shape)
+        rgb_aug, kps_aug = self.aug_pipeline(image=rgb, keypoints=kps)
+        # TODO (syang) See if we need to draw the keypoints on the image
+        center, angle = get_center_angle(
+            np.array([kps_aug.keypoints[0].x, kps_aug.keypoints[0].y]),
+            np.array([kps_aug.keypoints[1].x, kps_aug.keypoints[1].y]))
         
 
         # =============Put Everything together =======================================================
