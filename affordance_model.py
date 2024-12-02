@@ -71,6 +71,18 @@ class AffordanceDataset(Dataset):
         # 5. get goal_kp x, y location after rotation 
         # 6. get goal_img using get_gaussian_scoremap()
         # ===============================================================================
+        seq = iaa.Sequential([
+            iaa.Affine(
+                rotate=-nn_angle,
+            ) # rotate by exactly 10deg and scale to 50-70%, affects keypoints
+        ])
+        rgb = data["rgb"].numpy()
+        center = data["center_point"].numpy()
+        kps = KeypointsOnImage([
+            Keypoint(x=center[0], y=center[1]),
+        ], shape=rgb.shape)
+        rot_img, goal_kp = seq(image=rgb, keypoints=kps)
+        goal_img = get_gaussian_scoremap(shape=rgb.shape, keypoint=goal_kp)
         
         data = {
             'input': torch.from_numpy(np.moveaxis(rot_img, -1, 0)),
@@ -238,5 +250,5 @@ class AffordanceModel(nn.Module):
             x[-1,:,:] = 127
             rows.append(x)
         vis_img = np.concatenate(rows, axis=0)
-         return coord, angle, vis_img
+        return coord, angle, vis_img
 
