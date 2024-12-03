@@ -181,9 +181,23 @@ class AffordanceModel(nn.Module):
         return img
 
     def suppress_failure_grasp(self, affordance_map): 
-        # TODO: Avoid selecting the same failed actions
-        # Hints: past actions are stored in self.past_actions
-        return affordance_map
+        update_affordance = affordance_map.clone()
+        for past_action in self.past_actions:
+            rot_idx = past_action[0]
+            keypoint = np.array(past_action[1:][::-1])
+            suppression_map = get_gaussian_scoremap(shape=affordance_map.shape[1:], keypoint=keypoint)
+            # # Verify value at keypoint before suppression
+            # value_before = update_affordance[rot_idx][int(keypoint[1])][int(keypoint[0])]
+            # assert value_before > 0, f"Value at keypoint was already 0: {value_before}"
+            
+            # Apply suppression
+            update_affordance[rot_idx] -= suppression_map
+            
+            # # Verify value at keypoint after suppression 
+            # value_after = update_affordance[rot_idx][int(keypoint[1])][int(keypoint[0])]
+            # assert value_after == 0, f"Value at keypoint not 0 after suppression: {value_after}"
+        update_affordance = torch.clamp(update_affordance, min=0, max=1)
+        return update_affordance
 
 
     def predict_grasp(
