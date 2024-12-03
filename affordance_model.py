@@ -206,7 +206,12 @@ class AffordanceModel(nn.Module):
         #=====================
         # TODO: Prepare the input to network
         # rotate the rgb_obs 8 times for each rotators
+        rgb_rotated = []
+        for rotator in rotators:
+            rotated = rotator(image=rgb_obs)
+            rgb_rotated.append(np.transpose(rotated, (2,0,1)))
         # stack 8 rotated image as an input batch store in rgb_input 
+        rgb_input = np.stack(rgb_rotated)
 
         #=====================
         with torch.no_grad():
